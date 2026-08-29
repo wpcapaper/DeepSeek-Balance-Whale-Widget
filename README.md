@@ -8,10 +8,14 @@ DeepSeek Harness（DSH）Web 界面右下角的常驻余额挂件：小鲸鱼气
 
 - 🐋 **常驻自启**：随 DSH Web 界面每次打开自动出现（标准 DSH bundle 插件）
 - 💰 **余额**：60 秒自动刷新 + 点击鲸鱼手动刷新；余额变化时数字**滚动动画**；瞬时网络抖动自动沿用最近余额不报错
+- 🔀 **多视图切换**：主气泡内小圆钮，在已启用的余额视图间循环切换；默认 `auto` 跟随当前会话正在用的 provider（本会话走 zai coding plan 时自动显示 GLM，走 StepFun step-plan 时自动显示 StepFun Plan），手动切换后锁定并持久化到 `size.json` 的 `viewMode`；`size.json` 的 `enabledViews` 数组管理可用视图（默认 `["ds","glm"]`），后续扩展新 provider 只需把视图 key 加入该数组
+- 🐋 **GLM Coding Plan 用量**：GLM 视图下大字显示用得多的窗口（`周 95%`），小字显示少的窗口与重置倒计时（`5h 24% · 4h23m后重置`），按使用量四档阶梯色（≥90% 红 / ≥70% 黄 / ≥30% 蓝 / <30% 绿）；数据来自智谱官方监控接口 `GET open.bigmodel.cn/api/monitor/usage/quota/limit`（Authorization 直接带 key，不加 Bearer），凭据 `ZAI_CODING_CN_API_KEY`（回退 `ZAI_API_KEY`）；宿主侧 2 分钟缓存，前端 60 秒轮询，点击鲸鱼一并手动刷新
+- 🐋 **StepFun Plan 月度 Credit**：StepFun Plan 视图显示新版 Step Plan 月度 Credit 已用百分比（`已用 12.5%`），小字展示接口返回的下次重置时间（`9月23日 10:26 重置`），按使用量四档阶梯色（≥90% 红 / ≥70% 黄 / ≥30% 蓝 / <30% 绿）；数据来自 `POST https://platform.stepfun.com/api/step.openapi.devcenter.Dashboard/QueryStepPlanRateLimit`，凭据 `STEPFUN_PLAN_OASIS_TOKEN` + `STEPFUN_PLAN_WEB_ID`（从已登录的 StepFun 网页端 Cookie / LocalStorage 获取）；**自动续期**：访问令牌 30 分钟过期时自动调用护照 `RefreshToken` 接口刷新并回写凭据，无需手动复制（组合串整体约 7 天寿命）；宿主侧 2 分钟缓存，前端 60 秒轮询；未配置凭据时自动隐藏
+- 🐋 **StepFun 余额**：StepFun 视图显示 `GET https://api.stepfun.com/v1/accounts` 返回的账户可用余额（`balance`），小字展示充值 / 赠送拆分；凭据 `STEP_API_KEY`（回退 `STEPFUN_API_KEY`）；宿主侧 2 分钟缓存，前端 60 秒轮询；未配置 key 时自动隐藏
 - 📊 **今日已用**：两种模式任选（见下），显示今日消耗金额
   - **小鲸鱼记账（推荐，免令牌）**：不需要任何会话令牌，鲸鱼娘每次观测余额后用余额差值自动记账（`.dshw-usage.json`，跨天自动归零归档）
   - **实时·令牌**：填入平台会话令牌后直接调用平台用量接口，按**峰谷定价**（工作日高峰 9:00–12:00 与 14:00–18:00，其余空闲；2026-08-23 起周末全天按谷价）实时换算今日已用
-- 💬 **每轮对话消耗统计**：监听本机会话事件，每轮对话结束后弹出本轮消耗金额（精确 usage，非估算）
+- 💬 **每轮对话消耗统计**：监听本机会话事件，每轮对话结束后弹出本轮消耗（精确 usage，非估算）；按本轮 `source.provider` 自动适配口径——zai coding plan（`zai` / `zai-coding*`，订阅制）显示 token 数 + 当前配额水位（`5h 24% · 周 95%`，按严重度着色），其余 provider 显示金额（峰谷定价）；provider 缺失时回退 glm 模型名启发式
   - 菜单可开关「每轮对话后自动显示消耗金额」；「自动关闭时间」可自定义秒数（填 0 表示不自动关闭）
   - 消耗金额泡泡显示期间，余额变动不弹普通泡泡
 - 🖱️ **拖拽 + 四边四分之一吸附**（左/右/上/下，角落可组合）
@@ -21,6 +25,56 @@ DeepSeek Harness（DSH）Web 界面右下角的常驻余额挂件：小鲸鱼气
 - 🔊 **音效**：按压/松手音效（可选包内 mp3，缺失时静默降级）
 - 💬 **随机台词**：点击气泡切换随机台词段（加权随机，含峰谷提示/今日已用/gif 动图/卖萌吐槽），再点一次关闭；气泡总显示 5 秒自动收起
 - 📐 随浏览器窗口自动缩放；文字位置/字号与图片联动
+
+## 视图与余额配置
+
+挂件通过 `size.json`（DSH profile 目录下的挂件配置）管理可切换的余额视图：
+
+- `enabledViews`: 数组，决定气泡小圆钮里能切换到哪些视图。默认 `["ds","glm"]`。
+  - `"ds"` — DeepSeek 余额（默认视图）
+  - `"glm"` — GLM Coding Plan 配额（需配置 `ZAI_CODING_CN_API_KEY`）
+  - `"stepfun"` — StepFun 账户余额（需配置 `STEP_API_KEY` 或 `STEPFUN_API_KEY`）
+  - `"stepfun-plan"` — StepFun Plan 月度 Credit 配额（需配置 `STEPFUN_PLAN_OASIS_TOKEN` + `STEPFUN_PLAN_WEB_ID`）
+- `viewMode`: 当前选中的视图，或 `"auto"` 让挂件跟随当前会话的 `source.provider` 自动选择。
+  - `stepfun*` provider 优先映射到 `stepfun-plan`（若启用），否则映射到 `stepfun`。
+
+示例：把 StepFun Plan 也加入切换列表，在 `size.json` 里加：
+
+```json
+{
+  "enabledViews": ["ds", "glm", "stepfun", "stepfun-plan"],
+  "viewMode": "auto"
+}
+```
+
+保存后刷新浏览器，气泡小圆钮会在已启用的视图间循环切换；当前会话使用 StepFun provider 时，若 `stepfun-plan` 已启用则自动显示 StepFun Plan 配额。
+
+凭据配置（`~/.dsh/.credentials.yaml`）：
+
+```yaml
+# StepFun 账户余额（可选）
+STEP_API_KEY: "你的StepFun API Key"
+# 或
+STEPFUN_API_KEY: "你的StepFun API Key"
+
+# StepFun Plan 月度 Credit 配额（从已登录的 platform.stepfun.com 浏览器端获取）
+STEPFUN_PLAN_OASIS_TOKEN: "Oasis-Token Cookie 值（整段复制，含 ... 分隔的两段 JWT）"
+STEPFUN_PLAN_WEB_ID: "localStorage.web_id 值（32 位十六进制设备号）"
+```
+
+`STEPFUN_PLAN_OASIS_TOKEN` 和 `STEPFUN_PLAN_WEB_ID` 获取方式：
+
+1. 登录 <https://platform.stepfun.com>（保持登录态）
+2. 打开 DevTools → **Application → Cookies → https://platform.stepfun.com**
+3. 找到名为 **`Oasis-Token`** 的 Cookie，**双击 Value 列全选后整段复制**（不要分段、不要截断）
+   - 它的值长这样：`eyJhbGciOiJIUzI1NiIs...签名...eyJhbGciOiJIUzI1NiIs...签名`——**中间有 `...` 分隔符**，这是「访问令牌 + 刷新令牌」的组合串，必须整体作为一个值粘贴
+   - 如果看不到这个 Cookie：重新登录一次平台（或清 Cookie 后重登），它会随登录会话生成
+4. 打开 DevTools → **Application → Local Storage → https://platform.stepfun.com**
+5. 找到 **`web_id`**，复制它的值（32 位十六进制，如 `31d48f30...7d`）填入 `STEPFUN_PLAN_WEB_ID`
+
+> **自动续期**：组合串里的访问令牌约 30 分钟过期，挂件会在每次查询前检测过期时间，
+> 通过 StepFun 护照 `RefreshToken` 接口自动刷新并回写 `STEPFUN_PLAN_OASIS_TOKEN`，
+> 无需手动重新复制。整个组合串约 7 天寿命，到期后按上面第 3 步重新复制一次即可。
 
 ## 目录结构
 
@@ -186,12 +240,14 @@ curl http://127.0.0.1:3080/dsh-whale/image.png
 curl http://127.0.0.1:3080/dsh-whale/balance.json
 curl http://127.0.0.1:3080/dsh-whale/size.json
 curl http://127.0.0.1:3080/dsh-whale/last-turn.json
+curl http://127.0.0.1:3080/dsh-whale/glm.json
 ```
 
 - `/dsh-whale/image.png` → 200 `image/png`
 - `/dsh-whale/balance.json` → 200，含 `{"ok":true,"totalBalance":...,"currency":"CNY","todayUsage":...}`
 - `/dsh-whale/size.json` → GET 返回配置；PUT 写入
 - `/dsh-whale/last-turn.json` → 200，含最近一轮对话消耗 `{seq, turn, amount, tokens}`
+- `/dsh-whale/glm.json` → 200，含 `{"ok":true,"level":"pro","fiveHour":{"percent":24,"resetMs":...},"weekly":{"percent":95,"resetMs":...}}`（未配置 ZAI key 时 `{"ok":false,"code":"NO_KEY",...}`）
 - 浏览器 F5 后右下角出现挂件
 
 ## 常见问题
