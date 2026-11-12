@@ -491,6 +491,7 @@ curl http://127.0.0.1:3080/dsh-whale/audio.json
 - 仓库里 `lib/index.js` 是宿主本体、`lib/accounting.mjs` 是记账内核（定点金额运算 + 观测/校正账本）、`assets/whale-widget.js` 是前端本体；宿主改动（含记账内核）需重启 `dsh web`，仅前端改动硬刷新页面即生效。
 - 完整规格、视觉参数、路由清单、架构结论与生成提示词见 [`whale-widget-prompt.md`](whale-widget-prompt.md)。
 - 本地联调：`dsh plugin --profile web add link:.` 后，改前端 → Ctrl+F5；改宿主 → 重启 `dsh web`。
+- **StepFun Plan 自检**：`node tools/stepfun-plan-selftest.mjs`（0 依赖、不联网、不碰真实凭据）—— 用假 ctx + 假 fetch 驱动真实 `lib/index.js`，覆盖模板下发、请求头占位符、`remainPctScale`、令牌续期与回写、缺 `web_id` 与「测试连通性」等 7 组场景。
 
 ## 致谢
 
