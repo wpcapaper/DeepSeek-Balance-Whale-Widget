@@ -4991,7 +4991,7 @@ function openApiModelPanel(modelId) {
     var authHint = document.createElement('div')
     authHint.className = 'dshwv-bubhint'
     authHint.style.margin = '0 0 6px'
-    authHint.textContent = '多个请求头用英文分号分隔，例：x-api-key:{key};anthropic-version:2023-06-01（{key} 会被替换成密钥）。' +
+    authHint.textContent = '多个请求头用英文分号分隔，例：x-api-key:{key};anthropic-version:2023-06-01（{key} 会被替换成密钥，{xxx} 用下面「请求参数」里的值）。' +
       '不带冒号的写法（如 Bearer {key}）仍按 Authorization 头发送，老配置无需改。' +
       'Host、Content-Length、Connection、Transfer-Encoding 等危险头一律被忽略。'
     card.appendChild(authHint)
@@ -5005,7 +5005,7 @@ function openApiModelPanel(modelId) {
     var balBodyRow = apiPanelRow('请求体', balBody)
     card.appendChild(balBodyRow)
     var prm = (m && m.params) || {}
-    var prmInp = apiTextInput(Object.keys(prm).map(function (k) { return k + '=' + prm[k] }).join(','), '请求体占位符，如 uuid=abc123（逗号分隔）')
+    var prmInp = apiTextInput(Object.keys(prm).map(function (k) { return k + '=' + prm[k] }).join(','), '占位符参数，如 uuid=abc123 或 web_id=31d48f30…（逗号分隔；请求体与请求头里的 {xxx} 都能用）')
     var prmRow = apiPanelRow('请求参数', prmInp)
     card.appendChild(prmRow)
     // v789（issue #189）：0.3.15 起的"凭据目的地白名单"唯一例外必须能在界面上勾 ——

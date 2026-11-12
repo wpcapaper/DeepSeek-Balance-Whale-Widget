@@ -80,21 +80,37 @@ DeepSeek Harness（DSH）Web 界面右下角的常驻挂件：小鲸鱼气泡图
 
 除内置的 DeepSeek 余额外，可在「小鲸鱼记账 → 模型」里添加任意厂商；每个模型独立配置余额预警 / 今日预算 / 额度：
 
-- 🧩 **厂商模板（34 个，选完自动带好凭据名 / 币种 / 接口 / 字段路径 / 事件匹配 / 探活地址）**：
-  - **可直接查到余额或额度**：DeepSeek（内置）、OpenRouter、Kimi / Moonshot（CN / 国际）、阶跃星辰 StepFun、Novita、智谱 GLM Coding Plan（国内 / 国际 z.ai）、Kimi Coding、MiniMax Coding（国内 / 国际）、**OpenCode Go（订阅，5h / 周 / 月三窗口）**、OpenAI 兼容中转站（OneAPI / New API）
+- 🧩 **厂商模板（35 个，选完自动带好凭据名 / 币种 / 接口 / 字段路径 / 事件匹配 / 探活地址）**：
+  - **可直接查到余额或额度**：DeepSeek（内置）、OpenRouter、Kimi / Moonshot（CN / 国际）、阶跃星辰 StepFun、**阶跃星辰 StepFun Plan（订阅，月度 Credit）**、Novita、智谱 GLM Coding Plan（国内 / 国际 z.ai）、Kimi Coding、MiniMax Coding（国内 / 国际）、**OpenCode Go（订阅，5h / 周 / 月三窗口）**、OpenAI 兼容中转站（OneAPI / New API）
   - **官方没有「用 API key 查余额」的接口**（下拉里标注「（无余额接口）」，选完会用 `probeUrl` 探活验证 key，余额显示「—」，今日已用按会话事件估算）：硅基流动（CN / EN）、火山方舟 Ark、OpenAI、Anthropic Claude、Google Gemini、xAI Grok、Groq、Mistral AI、Together AI、Fireworks AI、DeepInfra、Cerebras、阿里云百炼（通义千问）、百度千帆（文心）、腾讯混元、讯飞星火、魔搭 ModelScope、本地模型（Ollama / LM Studio）
   - **全手填**：自定义 HTTP（URL 与字段路径自己写）、Codex（本地会话，无需接口）
 - 🔑 **密钥不落配置**：密钥写入 DSH 官方凭据服务，配置文件里只存**凭据名**（如 `OPENROUTER_API_KEY`）；删除模型会连带清理该模型的额度模块与设置
 - 💰 **余额**：按模板的接口与 JSON 字段路径读取（支持 `a.b[0].c` 与 `scale` 乘数）；点「测试连通性」可先验证 key
 - 📉 **今日已用**：有余额接口时记录观测到的**下降额**（当天首次观测为统计起点，充值等增加额不会冲掉消费），无余额接口的厂商显示本机会话**估算**
 - 🎯 **额度（订阅 / 资源包）**：填总量即可，已用**按 DSH 会话 token 自动累计**（口径 `input + cacheRead + output`，推理 token 已含在 output 内，跨天保留），也可切换手动填写；支持「不重置 / 每日 / 每月」
-- 🧾 **订阅额度接口（`kind:'quota'` 模板）**：直接读厂商官方接口的「窗口已用% + 重置时间」，与上面按会话统计的额度互补。**支持一个接口返回多个窗口**（目前 OpenCode Go 为 5h / 周 / 月三窗口），逐窗口展示已用百分比与各自的紧凑重置倒计时；模板用 `quota.json.windows` 描述各窗口的字段路径
+- 🧾 **订阅额度接口（`kind:'quota'` 模板）**：直接读厂商官方接口的「窗口已用% + 重置时间」，与上面按会话统计的额度互补。**支持一个接口返回多个窗口**（目前 OpenCode Go 为 5h / 周 / 月三窗口），逐窗口展示已用百分比与各自的紧凑重置倒计时；模板用 `quota.json.windows` 描述各窗口的字段路径。另有 `quota.json.remainPctScale`（把「0..1 剩余比例」换算成百分比）与 `quota.authRefresh`（网页端令牌自动续期，见「StepFun Plan」一节）
 - 💱 **单价（可选）**：位置在「密钥 / 接口」面板 → 展开「接口与字段（高级）」→「单价（可选）」。每个模型可自填单价 —— **缓存命中 / 未命中输入 / 输出**，单位是「币种 / 百万 token」；币种支持人民币（CNY）与美元（USD），**选美元时必须填汇率（元/USD）**；记账与账本**统一按人民币结算**（美元单价会按汇率折算）；单价**不分峰谷**（两个时段同价）。留空则沿用内置价目表（DeepSeek flash / pro）。注意：**内置 DeepSeek 不支持自定义单价**（始终用内置峰谷价）；额度单位选「金额（元）」时，已用**只能手动填写**
 - 🫧 **泡泡模块**：每个模型自动获得「余额·<模型名>」与「额度·<模型名>」两个模块，占位符 `{balance}`、`{today}`、`{quota}`、`{quota_used}`、`{quota_left}`、`{quota_total}`、`{quota_reset}`
 
-> 说明：并非所有厂商都提供「用 API key 查余额」的接口。**硅基流动**的余额接口已被官方下线（[2026-08-11 更新公告](https://api-docs.siliconflow.cn/docs/release-notes/overview)：`/user/info` 自 **2026-08-14** 起停止服务，「后续将适时提供替代 API」，截至发版仍未见替代接口），**火山方舟**的余额 / 用量与**阿里云百炼 / 百度千帆 / 腾讯混元**一样属于各家云平台 AK/SK 签名的 OpenAPI，**OpenAI / Anthropic / Gemini / xAI / Groq / Mistral / Together / Fireworks / DeepInfra / Cerebras** 则根本没有公开的余额查询接口 —— 这些模板统一是「无余额接口 + 探活验证 key」，今日已用按会话事件估算。厂商的**订阅额度**接口（智谱 / Kimi Coding / MiniMax Coding / OpenCode Go）只对订阅套餐账号有效：Token 资源包账号调用智谱接口会返回「当前用户不存在coding plan」，这种情况请用上面的「额度（订阅 / 资源包）」自动统计。
+> 说明：并非所有厂商都提供「用 API key 查余额」的接口。**硅基流动**的余额接口已被官方下线（[2026-08-11 更新公告](https://api-docs.siliconflow.cn/docs/release-notes/overview)：`/user/info` 自 **2026-08-14** 起停止服务，「后续将适时提供替代 API」，截至发版仍未见替代接口），**火山方舟**的余额 / 用量与**阿里云百炼 / 百度千帆 / 腾讯混元**一样属于各家云平台 AK/SK 签名的 OpenAPI，**OpenAI / Anthropic / Gemini / xAI / Groq / Mistral / Together / Fireworks / DeepInfra / Cerebras** 则根本没有公开的余额查询接口 —— 这些模板统一是「无余额接口 + 探活验证 key」，今日已用按会话事件估算。厂商的**订阅额度**接口（智谱 / Kimi Coding / MiniMax Coding / OpenCode Go / StepFun Plan）只对订阅套餐账号有效：Token 资源包账号调用智谱接口会返回「当前用户不存在coding plan」，这种情况请用上面的「额度（订阅 / 资源包）」自动统计。
 >
 > 模板只提供**默认值**：选完模板后可以随意改写接口地址与字段路径；留空的字段会**继续沿用模板默认值**（不会因为留空而失效）。
+
+### StepFun Plan（订阅额度 + 网页令牌自动续期）
+
+阶跃星辰的 Step Plan **月度 Credit** 只在网页端能看到，没有公开 API，用 API key 查不到。用模板「阶跃星辰 StepFun Plan（订阅）」：
+
+1. 「小鲸鱼记账 → 模型 → 新增」，厂商模板选 **阶跃星辰 StepFun Plan（订阅）**；
+2. **凭据** `STEPFUN_PLAN_OASIS_TOKEN`：登录 <https://platform.stepfun.com> → DevTools → **Application → Cookies → platform.stepfun.com**，把 `Oasis-Token` 的**整段值**复制进来（形如 `accessToken...refreshToken`，中间是三个点，别删也别截断）；
+3. 展开「**接口与字段（高级）**」→「**请求参数**」填 `web_id=<32 位十六进制>`（DevTools → **Application → Local Storage → web_id**；它是设备号，**不是机密**）；
+4. 保存后模型行会出现「厂商额度」，泡泡里加「额度 · <模型名>」模块就能一直显示。
+
+说明：
+
+- **自动续期**：Oasis 访问令牌只有约 30 分钟寿命，插件在「距过期不到 5 分钟」或「接口报未认证 / 401」时，自动调护照 `RefreshToken` 换一对新令牌并**回写凭据**，不用手动复制（组合串整体约 7 天，到期后重新登录复制一次即可）。
+- **显示口径**：接口返回 `subscriptionCreditLeftRate`（剩余比例 0..1），插件换算成「已用 x%」并显示重置倒计时；余额显示「—」，今日已用仍按本机会话事件估算。
+- **安全**：令牌只会发往模板里写死的 `platform.stepfun.com` 端点（受「凭据目的地白名单」约束，见下方「安全边界」）。
+- 「测试连通性」对这类只有额度接口的模板会**直接请求额度接口**，成功时会显示 `额度接口 HTTP 200 · 已用 x%`。
 
 ### Codex 模式（本地会话统计）
 
@@ -352,6 +368,7 @@ MeteorNOX/DeepSeek-Balance-Whale-Widget，或者我本地已经有这个插件�
 | `SILICONFLOW_API_KEY` | 硅基流动 `/v1/models` 探活 |
 | `ARK_API_KEY` | 火山方舟 `/api/v3/models` 探活 |
 | `ZHIPU_API_KEY` | 智谱（订阅额度接口 / Coding 端点） |
+| `STEPFUN_PLAN_OASIS_TOKEN` | 阶跃星辰 StepFun Plan 订阅额度（网页端 `Oasis-Token` 组合串；另需「请求参数」填 `web_id=…`） |
 | `OPENCODE_GO_API_KEY` | OpenCode Go 订阅额度（`opencode.ai/zen/go/v1/usage`，鉴权为 `Authorization: Bearer <key>`） |
 | `CUSTOM_API_KEY` | 自定义 HTTP / OpenAI 兼容中转站 |
 
@@ -439,6 +456,7 @@ curl http://127.0.0.1:3080/dsh-whale/audio.json
 - **装了 IDM / 迅雷 / Free Download Manager / Motrix 等下载管理器时，每次打开 DSH 都弹"下载确认框"，目标 URL 是挂件的音效**（issue #158）：这些管理器的浏览器集成会把页面里的音效请求当成下载任务抢走。**推荐做法：把本机地址加入它的站点排除列表**（IDM：`选项 → 文件类型 / 站点排除`，把 `127.0.0.1` 与 `localhost` 加进去；其它管理器同理，关键词是"排除本机地址 / 不监控该站点"）。关掉挂件音效开关并不能消除弹窗 —— 音效元素在页面初始化时就会建立。
 - **提问 / 授权时不响、也没泡泡**：这两个事件**默认开着**（默认**只冒泡、不响**）。想听声音就去「菜单 → 音效与提示 → 全局设置」，**点一下「提问提示」/「授权提示」那一行**把它展开，勾上「提问提示音效 / 授权提示音」那一行左侧的 `[✓]`（不勾 = 静音、但照旧冒泡），再在下拉里选一个音效；不需要提示就把该区入口行左边的总开关 `[✓]` 取消。（入口行右侧的摘要会实时显示当前配置。）
 - **余额报「未配置 DEEPSEEK_API_KEY」**：去 DSH 凭据里配置 API key；**或者**用「设置 → 账号与余额」登录 DeepSeek 账号（较新 DSH 支持）—— 没配 key 时插件会自动走账号态，不需要去 platform 建 key。
+- **StepFun Plan 额度显示 `--` / 报未认证**：按「自定义 API → StepFun Plan」那节的 4 步核一遍 —— ① 凭据名是 `STEPFUN_PLAN_OASIS_TOKEN` 且填的是**整段** `access...refresh` 组合串；② 「接口与字段（高级）」→「请求参数」里有 `web_id=…`；③ 组合串整体约 7 天到期（到期需重新登录复制一次），报「未认证」且自动续期也失败时多半是它过期了；④ 别把 `Oasis-Token` 截断成只剩 `access` 段。
 - **余额拿到了、但提示「账本不可用 / 已停止写入以保护原记录」**：账本文件（`.dshw-usage.json`）被外部改坏或结构异常，插件**拒绝覆盖**它以免丢数据。先把它备份改名让插件重建，再按需用「余额校正」补账。
 - **保存设置报 `403` / 在别的机器上改了配置不生效**：0.3.15 起**写操作只能在运行 DSH 的那台机器上、用 `127.0.0.1`（本机地址）打开界面进行**。从局域网或反向代理访问时，读没问题、写会被拒。需要远端管理就用 `DSHW_ADMIN_HOSTS` 显式授权那台机器（见「凭据 → 安全边界」）。
 - **提示「该地址不是 … 的内置端点，已拒绝把凭据发出去」**：这是 0.3.15 的安全策略 —— **自定义接口地址默认拿不到凭据**。确认那是你自己的网关（New API / 自托管等）后，在**本机**打开面板，对该模型勾选「允许把凭据发送到自定义地址」。
